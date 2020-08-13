@@ -40,7 +40,6 @@ func (c *Client) Connect(connected func(conn ziface.IConnection), closed func(co
 	}
 
 	c.msgHandler.StartWorkerPool()
-
 	c.TCPConntion = NewConntion(nil, conn, 0, c.msgHandler, connected, closed)
 	go c.TCPConntion.Start()
 }
@@ -54,7 +53,4 @@ func (c *Client) Close() {
 
 func (c *Client) AddRouter(msgId uint32, router ziface.IRouter) {
 	c.msgHandler.AddRouter(msgId, router)
-}
-
-func (c *Client) SetOnConnected(hookFunc func(ziface.IConnection))   {
 }
