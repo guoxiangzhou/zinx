@@ -55,7 +55,7 @@ func NewServer() ziface.IServer {
 //============== 实现 ziface.IServer 里的全部接口方法 ========
 
 //开启网络服务
-func (s *Server) Start() {
+func (s *Server) Start(connected func(conn ziface.IConnection), closed func(conn ziface.IConnection)) {
 	fmt.Printf("[START] Server name: %s,listenner at IP: %s, Port %d is starting\n", s.Name, s.IP, s.Port)
 
 	//开启一个go去做服务端Linster业务
@@ -101,7 +101,7 @@ func (s *Server) Start() {
 			}
 
 			//3.3 处理该新连接请求的 业务 方法， 此时应该有 handler 和 conn是绑定的
-			dealConn := NewConntion(s, conn, cid, s.msgHandler, nil, nil)
+			dealConn := NewConntion(s, conn, cid, s.msgHandler, connected, closed)
 			cid++
 
 			//3.4 启动当前链接的处理业务
@@ -116,16 +116,6 @@ func (s *Server) Stop() {
 
 	//将其他需要清理的连接信息或者其他信息 也要一并停止或者清理
 	s.ConnMgr.ClearConn()
-}
-
-//运行服务
-func (s *Server) Serve() {
-	s.Start()
-
-	//TODO Server.Serve() 是否在启动服务的时候 还要处理其他的事情呢 可以在这里添加
-
-	//阻塞,否则主Go退出， listenner的go将会退出
-	select {}
 }
 
 //路由功能：给当前服务注册一个路由业务方法，供客户端链接处理使用

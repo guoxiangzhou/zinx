@@ -153,7 +153,7 @@ func TestServer(t *testing.T) {
 	s.AddRouter(1, &ServerPingRouter{})
 	//s.AddRouter(2, &HelloRouter{})
 
-	go s.Start()
+	go s.Start(OnConnected, nil)
 
 	time.Sleep(1 * time.Second)
 
@@ -170,7 +170,11 @@ func TestServer(t *testing.T) {
 	// go s.Serve()
 
 	select {
-	case <-time.After(time.Second * 10):
+	case <-time.After(time.Second * 1):
 		return
 	}
+
+	c.Close()
+
+	s.Stop()
 }

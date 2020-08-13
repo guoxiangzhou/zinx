@@ -33,7 +33,9 @@ type Connection struct {
 	//保护链接属性修改的锁
 	propertyLock sync.RWMutex
 
+	//连接成功的回调
 	onConnectedCallback func(conn ziface.IConnection)
+	//连接关闭的回调
 	onClosedCallback    func(conn ziface.IConnection)
 }
 
