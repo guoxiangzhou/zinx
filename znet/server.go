@@ -34,10 +34,6 @@ type Server struct {
 	msgHandler ziface.IMsgHandle
 	//当前Server的链接管理器
 	ConnMgr ziface.IConnManager
-	//该Server的连接创建时Hook函数
-	OnConnStart func(conn ziface.IConnection)
-	//该Server的连接断开时的Hook函数
-	OnConnStop func(conn ziface.IConnection)
 }
 
 /*
@@ -105,7 +101,7 @@ func (s *Server) Start() {
 			}
 
 			//3.3 处理该新连接请求的 业务 方法， 此时应该有 handler 和 conn是绑定的
-			dealConn := NewConntion(s, conn, cid, s.msgHandler)
+			dealConn := NewConntion(s, conn, cid, s.msgHandler, nil, nil)
 			cid++
 
 			//3.4 启动当前链接的处理业务
@@ -140,32 +136,6 @@ func (s *Server) AddRouter(msgId uint32, router ziface.IRouter) {
 //得到链接管理
 func (s *Server) GetConnMgr() ziface.IConnManager {
 	return s.ConnMgr
-}
-
-//设置该Server的连接创建时Hook函数
-func (s *Server) SetOnConnStart(hookFunc func(ziface.IConnection)) {
-	s.OnConnStart = hookFunc
-}
-
-//设置该Server的连接断开时的Hook函数
-func (s *Server) SetOnConnStop(hookFunc func(ziface.IConnection)) {
-	s.OnConnStop = hookFunc
-}
-
-//调用连接OnConnStart Hook函数
-func (s *Server) CallOnConnStart(conn ziface.IConnection) {
-	if s.OnConnStart != nil {
-		fmt.Println("---> CallOnConnStart....")
-		s.OnConnStart(conn)
-	}
-}
-
-//调用连接OnConnStop Hook函数
-func (s *Server) CallOnConnStop(conn ziface.IConnection) {
-	if s.OnConnStop != nil {
-		fmt.Println("---> CallOnConnStop....")
-		s.OnConnStop(conn)
-	}
 }
 
 func init() {

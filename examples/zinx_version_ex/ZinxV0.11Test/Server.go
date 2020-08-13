@@ -80,8 +80,8 @@ func main() {
 	s := znet.NewServer()
 
 	//注册链接hook回调函数
-	s.SetOnConnStart(DoConnectionBegin)
-	s.SetOnConnStop(DoConnectionLost)
+	//s.SetOnConnStart(DoConnectionBegin)
+	//s.SetOnConnStop(DoConnectionLost)
 
 	//配置路由
 	s.AddRouter(0, &PingRouter{})

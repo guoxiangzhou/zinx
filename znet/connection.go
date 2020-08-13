@@ -14,7 +14,7 @@ type Connection struct {
 	//当前Conn属于哪个Server
 	TcpServer ziface.IServer
 	//当前连接的socket TCP套接字
-	Conn *net.TCPConn
+	Conn net.Conn
 	//当前连接的ID 也可以称作为SessionID，ID全局唯一
 	ConnID uint32
 	//当前连接的关闭状态
@@ -32,25 +32,34 @@ type Connection struct {
 	property map[string]interface{}
 	//保护链接属性修改的锁
 	propertyLock sync.RWMutex
+
+	onConnectedCallback func(conn ziface.IConnection)
+	onClosedCallback    func(conn ziface.IConnection)
 }
 
 //创建连接的方法
-func NewConntion(server ziface.IServer, conn *net.TCPConn, connID uint32, msgHandler ziface.IMsgHandle) *Connection {
+func NewConntion(server ziface.IServer, conn net.Conn, connID uint32, msgHandler ziface.IMsgHandle,
+	connectedCB func(ziface.IConnection), closeCB func(ziface.IConnection)) *Connection {
 	//初始化Conn属性
 	c := &Connection{
-		TcpServer:    server,
-		Conn:         conn,
-		ConnID:       connID,
-		isClosed:     false,
-		MsgHandler:   msgHandler,
-		ExitBuffChan: make(chan bool, 1),
-		msgChan:      make(chan []byte),
-		msgBuffChan:  make(chan []byte, utils.GlobalObject.MaxMsgChanLen),
-		property:     make(map[string]interface{}),
+		TcpServer:           server,
+		Conn:                conn,
+		ConnID:              connID,
+		isClosed:            false,
+		MsgHandler:          msgHandler,
+		ExitBuffChan:        make(chan bool, 1),
+		msgChan:             make(chan []byte),
+		msgBuffChan:         make(chan []byte, utils.GlobalObject.MaxMsgChanLen),
+		property:            make(map[string]interface{}),
+		onConnectedCallback: connectedCB,
+		onClosedCallback:    closeCB,
 	}
 
 	//将新创建的Conn添加到链接管理中
-	c.TcpServer.GetConnMgr().Add(c)
+	if c.TcpServer != nil {
+		c.TcpServer.GetConnMgr().Add(c)
+	}
+
 	return c
 }
 
@@ -148,7 +157,9 @@ func (c *Connection) Start() {
 	//2 开启用于写回客户端数据流程的Goroutine
 	go c.StartWriter()
 	//按照用户传递进来的创建连接时需要处理的业务，执行钩子方法
-	c.TcpServer.CallOnConnStart(c)
+	if c.onConnectedCallback != nil {
+		c.onConnectedCallback(c)
+	}
 }
 
 //停止连接，结束当前连接状态M
@@ -161,7 +172,9 @@ func (c *Connection) Stop() {
 	c.isClosed = true
 
 	//如果用户注册了该链接的关闭回调业务，那么在此刻应该显示调用
-	c.TcpServer.CallOnConnStop(c)
+	if c.onClosedCallback != nil {
+		c.onClosedCallback(c)
+	}
 
 	// 关闭socket链接
 	c.Conn.Close()
@@ -169,7 +182,9 @@ func (c *Connection) Stop() {
 	c.ExitBuffChan <- true
 
 	//将链接从连接管理器中删除
-	c.TcpServer.GetConnMgr().Remove(c)
+	if c.TcpServer != nil {
+		c.TcpServer.GetConnMgr().Remove(c)
+	}
 
 	//关闭该链接全部管道
 	close(c.ExitBuffChan)
@@ -177,7 +192,7 @@ func (c *Connection) Stop() {
 }
 
 //从当前连接获取原始的socket TCPConn
-func (c *Connection) GetTCPConnection() *net.TCPConn {
+func (c *Connection) GetTCPConnection() net.Conn {
 	return c.Conn
 }
 
