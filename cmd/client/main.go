@@ -35,10 +35,14 @@ func main()  {
 	c := znet.NewClient("127.0.0.1", 8999)
 	c.AddRouter(1, &PingRouter{})
 	go c.Connect(OnConnected, OnClosed)
-	defer c.Close()
+
 
 	select {
 	case <-time.After(time.Second * 1):
-		return
+		break
 	}
+
+	c.Close()
+
+	time.Sleep(3 * time.Second)
 }
