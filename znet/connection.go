@@ -15,8 +15,6 @@ type Connection struct {
 	TcpServer ziface.IServer
 	//当前连接的socket TCP套接字
 	Conn net.Conn
-	//当前连接的ID 也可以称作为SessionID，ID全局唯一
-	ConnID uint32
 	//当前连接的关闭状态
 	isClosed bool
 	//消息管理MsgId和对应处理方法的消息管理模块
@@ -40,13 +38,12 @@ type Connection struct {
 }
 
 //创建连接的方法
-func NewConntion(server ziface.IServer, conn net.Conn, connID uint32, msgHandler ziface.IMsgHandle,
+func NewConntion(server ziface.IServer, conn net.Conn, msgHandler ziface.IMsgHandle,
 	connectedCB func(ziface.IConnection), closeCB func(ziface.IConnection)) *Connection {
 	//初始化Conn属性
 	c := &Connection{
 		TcpServer:           server,
 		Conn:                conn,
-		ConnID:              connID,
 		isClosed:            false,
 		MsgHandler:          msgHandler,
 		ExitBuffChan:        make(chan bool, 1),
@@ -172,7 +169,7 @@ func (c *Connection) Stop() {
 	}
 	c.isClosed = true
 
-	fmt.Println("Conn Stop()...ConnID = ", c.ConnID)
+	fmt.Println("Conn Stop()...ConnID = ", c.GetNetConn())
 
 	//如果用户注册了该链接的关闭回调业务，那么在此刻应该显示调用
 	if c.onClosedCallback != nil {
@@ -195,13 +192,8 @@ func (c *Connection) Stop() {
 }
 
 //从当前连接获取原始的socket TCPConn
-func (c *Connection) GetTCPConnection() net.Conn {
+func (c *Connection) GetNetConn() net.Conn {
 	return c.Conn
-}
-
-//获取当前连接ID
-func (c *Connection) GetConnID() uint32 {
-	return c.ConnID
 }
 
 //获取远程客户端地址信息

@@ -36,7 +36,6 @@ func main()  {
 	c.AddRouter(1, &PingRouter{})
 	go c.Connect(OnConnected, OnClosed)
 
-
 	select {
 	case <-time.After(time.Second * 1):
 		break

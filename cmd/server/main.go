@@ -11,7 +11,7 @@ type Router struct {
 }
 
 func (router *Router) Handle(request ziface.IRequest) {
-	fmt.Println("recv from client : msgId=", request.GetMsgID(), ", data=", string(request.GetData()))
+	//fmt.Println("recv from client : msgId=", request.GetMsgID(), ", data=", string(request.GetData()))
 	err := request.GetConnection().SendMsg(1, []byte("server: ping"))
 	if err != nil {
 		fmt.Println("Handle SendMsg err: ", err)
@@ -19,12 +19,12 @@ func (router *Router) Handle(request ziface.IRequest) {
 }
 
 func OnConnected(conn ziface.IConnection)  {
-	fmt.Println("server: OnConnected ------------------ ", conn.GetConnID())
+	fmt.Println("server: OnConnected ------------------ ", conn.GetNetConn())
 	conn.SendMsg(1, []byte("client: ping"))
 }
 
 func OnClosed(conn ziface.IConnection)  {
-	fmt.Println("server: OnClosed ------------------ ", conn.GetConnID())
+	fmt.Println("server: OnClosed ------------------ ", conn.GetNetConn())
 }
 
 func main()  {

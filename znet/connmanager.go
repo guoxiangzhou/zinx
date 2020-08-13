@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/aceld/zinx/ziface"
+	"net"
 	"sync"
 )
 
@@ -11,7 +12,7 @@ import (
 	连接管理模块
 */
 type ConnManager struct {
-	connections map[uint32]ziface.IConnection //管理的连接信息
+	connections map[net.Conn]ziface.IConnection //管理的连接信息
 	connLock    sync.RWMutex                  //读写连接的读写锁
 }
 
@@ -20,7 +21,7 @@ type ConnManager struct {
 */
 func NewConnManager() *ConnManager {
 	return &ConnManager{
-		connections: make(map[uint32]ziface.IConnection),
+		connections: make(map[net.Conn]ziface.IConnection),
 	}
 }
 
@@ -31,7 +32,7 @@ func (connMgr *ConnManager) Add(conn ziface.IConnection) {
 	defer connMgr.connLock.Unlock()
 
 	//将conn连接添加到ConnMananger中
-	connMgr.connections[conn.GetConnID()] = conn
+	connMgr.connections[conn.GetNetConn()] = conn
 
 	fmt.Println("connection add to ConnManager successfully: conn num = ", connMgr.Len())
 }
@@ -43,18 +44,18 @@ func (connMgr *ConnManager) Remove(conn ziface.IConnection) {
 	defer connMgr.connLock.Unlock()
 
 	//删除连接信息
-	delete(connMgr.connections, conn.GetConnID())
+	delete(connMgr.connections, conn.GetNetConn())
 
-	fmt.Println("connection Remove ConnID=", conn.GetConnID(), " successfully: conn num = ", connMgr.Len())
+	fmt.Println("connection Remove ConnID=", conn.GetNetConn(), " successfully: conn num = ", connMgr.Len())
 }
 
 //利用ConnID获取链接
-func (connMgr *ConnManager) Get(connID uint32) (ziface.IConnection, error) {
+func (connMgr *ConnManager) Get(conn net.Conn) (ziface.IConnection, error) {
 	//保护共享资源Map 加读锁
 	connMgr.connLock.RLock()
 	defer connMgr.connLock.RUnlock()
 
-	if conn, ok := connMgr.connections[connID]; ok {
+	if conn, ok := connMgr.connections[conn]; ok {
 		return conn, nil
 	} else {
 		return nil, errors.New("connection not found")

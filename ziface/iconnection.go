@@ -10,9 +10,7 @@ type IConnection interface {
 	Stop()
 
 	//从当前连接获取原始的socket TCPConn
-	GetTCPConnection() net.Conn
-	//获取当前连接ID
-	GetConnID() uint32
+	GetNetConn() net.Conn
 	//获取远程客户端地址信息
 	RemoteAddr() net.Addr
 

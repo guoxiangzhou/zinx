@@ -40,7 +40,7 @@ func (c *Client) Connect(connected func(conn ziface.IConnection), closed func(co
 	}
 
 	c.msgHandler.StartWorkerPool()
-	c.TCPConntion = NewConntion(nil, conn, 0, c.msgHandler, connected, closed)
+	c.TCPConntion = NewConntion(nil, conn, c.msgHandler, connected, closed)
 	go c.TCPConntion.Start()
 }
 
